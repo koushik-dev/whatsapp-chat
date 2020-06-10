@@ -17,7 +17,7 @@
     "url": "https://github.com/koushik-dev/whatsapp-chat/issues"
   },
   "homepage": "https://github.com/koushik-dev/whatsapp-chat#readme",
-  "devDependencies": {
+  "dependencies": {
     "socket.io": "^2.3.0"
   }
 }
