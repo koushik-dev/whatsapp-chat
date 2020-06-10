@@ -4,6 +4,7 @@
   "description": "A nodejs look a like of whatsapp chat",
   "main": "socket.js",
   "scripts": {
+    "build": "node socket.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
