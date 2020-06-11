@@ -46,7 +46,7 @@ li {
         
     </div>
     <script>
-        const socket = io('http://localhost');
+        const socket = io();
         const name = prompt('who are you?');
         socket.emit('new-user', name);
         socket.on('user-joined', console.log)
