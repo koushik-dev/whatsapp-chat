@@ -1,7 +1,14 @@
-const port = process.env.PORT || 3000;
-const io = require('socket.io')(port)
-let users = {};
+let app = require('express')(),
+    server = require('http').Server(app),
+    io = require('socket.io')(server),
+    port = process.env.PORT || 3000,
+    users = {};
 
+server.listen(port);
+
+app.get('/', (req, res) => {
+    res.sendFile(__dirname + '/index.html')
+})
 io.on('connection', socket => {
     socket.on('new-user', name => {
         users[socket.id] = name;

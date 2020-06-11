@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Demo</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        * {
+    box-sizing: border-box;
+}
+body {
+    font-family: sans-serif;
+    margin: 0;
+}
+.container {
+    max-height: 100vh;
+    overflow-y: scroll;
+    border: 1px solid gray;
+    scroll-snap-type: mandatory;
+    scroll-snap-points-y: repeat(3rem);
+    scroll-snap-type: y mandatory;
+}
+li {
+    min-height: 75vh;
+    background-color: blueviolet;
+    border-bottom: 1px solid white;
+    padding: 1rem;
+    font-size: 1.2rem;
+    color: white;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    scroll-snap-align: start;
+}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <form onsubmit="send(event)">
+            <input type="text" name="chat" id="chat" />
+            <button type="submit" >send</button>
+        </form>
+        
+    </div>
+    <script>
+        const socket = io('http://localhost:3000');
+        const name = prompt('who are you?');
+        socket.emit('new-user', name);
+        socket.on('user-joined', console.log)
+        function send(event) {
+            event.preventDefault();
+            console.log(`${name}: ${document.getElementById('chat').value}`);
+            socket.emit('chat', document.getElementById('chat').value);
+            document.getElementById('chat').value = ''
+        }
+        socket.on('connect', () => {
+          socket.on('input', console.log)
+        });
+        socket.on('user-left', console.log)
+        socket.on('disconnect', () => {
+            console.log('disconnect', name)
+            socket.emit('user-left', name)
+        })
+      </script>
+</body>
+</html>
