@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,62 +9,103 @@
     <script src="/socket.io/socket.io.js"></script>
     <style>
         * {
-    box-sizing: border-box;
-}
-body {
-    font-family: sans-serif;
-    margin: 0;
-}
-.container {
-    max-height: 100vh;
-    overflow-y: scroll;
-    border: 1px solid gray;
-    scroll-snap-type: mandatory;
-    scroll-snap-points-y: repeat(3rem);
-    scroll-snap-type: y mandatory;
-}
-li {
-    min-height: 75vh;
-    background-color: blueviolet;
-    border-bottom: 1px solid white;
-    padding: 1rem;
-    font-size: 1.2rem;
-    color: white;
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    scroll-snap-align: start;
-}
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: sans-serif;
+            margin: 0;
+        }
+
+        .container {
+            max-height: 100vh;
+            overflow-y: scroll;
+            border: 1px solid gray;
+            scroll-snap-type: mandatory;
+            scroll-snap-points-y: repeat(3rem);
+            scroll-snap-type: y mandatory;
+        }
+
+        li {
+            min-height: 75vh;
+            background-color: blueviolet;
+            border-bottom: 1px solid white;
+            padding: 1rem;
+            font-size: 1.2rem;
+            color: white;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            scroll-snap-align: start;
+        }
     </style>
 </head>
+
 <body>
     <div class="container">
-        <form onsubmit="send(event)">
+        <div id="rooms">
+            <h1>ROOMS</h1>
+        </div>
+        <div id="users"></div>
+        <div class="create">
+            <input type="text" id="roomname" />
+            <button onclick="join()">join</button>
+        </div>
+        <form onsubmit="send(event)" id="form">
             <input type="text" name="chat" id="chat" />
-            <button type="submit" >send</button>
+            <button type="submit">send</button>
         </form>
-        
+        <div id="chat-container"></div>
+
     </div>
     <script>
         const socket = io();
-        const name = prompt('who are you?');
-        socket.emit('new-user', name);
-        socket.on('user-joined', console.log)
+        let user;
+        document.getElementById('form').style.display = 'none';
+        const chat = document.getElementById('chat-container');
+
+        socket.on('rooms', room => {
+            for(var i = 0; i < room.length; i++) {
+                document.getElementById('rooms').innerHTML += `<a href="javascript:void(0)" onclick="gotoRoom('${room[i]}')">${room[i]}</a>`
+            }
+        })
+
+        function gotoRoom(room) {
+            document.getElementById('roomname').value = room;
+            join();
+        }
+        socket.on('user-joined', (e) => {
+            chat.innerText += e + '\n';
+        })
+
+        function join() {
+            const roomname = document.getElementById('roomname');
+            socket.emit('addRoom', roomname.value);
+            roomname.style.display = 'none';
+            user = prompt('who the fuck are you?');
+            socket.emit('new-user', user);
+            document.getElementById('form').style.display = 'block';
+        }
         function send(event) {
             event.preventDefault();
-            console.log(`${name}: ${document.getElementById('chat').value}`);
+            chat.innerText += `${user}: ${document.getElementById('chat').value}\n`;
             socket.emit('chat', document.getElementById('chat').value);
             document.getElementById('chat').value = ''
         }
         socket.on('connect', () => {
-          socket.on('input', console.log)
+            socket.on('input', (e) => {
+                chat.innerText += e + '\n';
+            })
         });
-        socket.on('user-left', console.log)
+        socket.on('user-left', (e) => {
+            chat.innerText += e + '\n';
+        })
         socket.on('disconnect', () => {
-            console.log('disconnect', name)
+            chat.innerText += 'disconnect' + name + '\n'
             socket.emit('user-left', name)
         })
-      </script>
+    </script>
 </body>
+
 </html>
