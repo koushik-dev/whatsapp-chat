@@ -7,10 +7,18 @@ let app = require("express")(),
 server.listen(port);
 
 app.get("/", (req, res) => {
-  res.sendFile(__dirname + "/index.html");
+    res.send('')
+  // res.sendFile(__dirname + "/index.html");
 });
 io.on("connection", (socket) => {
-  socket.emit("rooms", Object.keys(rooms));
+    socket.on('chat-message', msg => {
+        socket.broadcast.emit('incomingMessage', {
+            text: msg,
+            name: 'Jane Doe',
+            id: Math.random(),
+            timeStamp: new Date()
+        })
+    })
   socket.on("addRoom", (name) => {
     socket.join(name);
     if (!rooms[name])
