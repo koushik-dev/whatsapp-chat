@@ -14,51 +14,75 @@ app.use((req, res, next) => {
   );
   next();
 });
+
 app.get("/", (req, res) => {
   res.send("");
 });
+// get all rooms
 app.get("/rooms", (req, res) => {
   res.send(rooms);
 });
+// get room details
 app.get("/room/:name", (req, res) => {
   res.send(rooms.filter((r) => r.name === req.params.name));
 });
+
+// socket connection
 io.on("connection", (socket) => {
-  socket.on("chat-message", (msg) => {
-    socket.broadcast.emit("incomingMessage", {
+  // on incoming message
+  socket.on("chat-message", ({ msg, room, user }) => {
+    socket.to(room).broadcast.emit("incomingMessage", {
       text: msg,
-      name: "Jane Doe",
+      name: user,
       id: Math.random(),
       timeStamp: new Date(),
+      isMsg: true,
     });
   });
-  socket.on("add-group", (name) => {
-    socket.join(name);
+
+  // create group
+  socket.on("create-group", (name) => {
     if (!rooms.some((r) => r.name === name))
       rooms.push({
         name,
         users: {},
       });
-    console.log(rooms);
   });
-  socket.on("new-user", (uname) => {
-    rooms[name].users[socket.id] = uname;
-    socket.to(name).broadcast.emit("user-joined", `${uname} joined`);
+
+  // join the group
+  socket.on("join-group", (room, name) => {
+    // if room not available, return to home
+    addUser({
+      room,
+      id: socket.id,
+      name,
+    });
+    socket.join(room, () =>
+      socket
+        .to(room)
+        .broadcast.emit("notification", `${getUserRoom(socket.id).user} joined`)
+    );
   });
+
+  //leave group
+  socket.on("leave-group", (room) => {
+    console.log(room);
+    socket.leave(room, () =>
+      socket
+        .to(room)
+        .broadcast.emit("notification", `${getUserRoom(socket.id).user} left`)
+    );
+  });
+
   socket.on("disconnect", () => {
     if (!rooms.length) return;
     let userRoom = getUserRoom(socket.id);
     if (userRoom)
-      socket.leave(userRoom.room, () =>
+      socket.leave(userRoom.room.name, () =>
         socket
-          .to(userRoom.room)
-          .broadcast.emit("user-left", `${userRoom.user} left the chat`)
+          .to(userRoom.room.name)
+          .broadcast.emit("notification", `${userRoom.user} left`)
       );
-  });
-  socket.on("chat", (message) => {
-    if (!Object.keys(rooms).length) return;
-    let { user, room } = getUserRoom(socket.id);
-    socket.to(room).broadcast.emit("input", `${user}: ${message}`);
   });
 });
 
@@ -66,6 +90,10 @@ const getUserRoom = (id) => {
   for (let i = 0; i < rooms.length; i++) {
     const users = rooms[i].users;
     if (Object.keys(users).indexOf(id) > -1)
-      return { user: users[id], id, room };
+      return { user: users[id], id, room: rooms[i] };
   }
+};
+
+const addUser = ({ room, id, name }) => {
+  rooms.filter((r) => r.name === room)[0].users[id] = name;
 };
