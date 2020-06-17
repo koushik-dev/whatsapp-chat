@@ -51,17 +51,21 @@ io.on("connection", (socket) => {
 
   // join the group
   socket.on("join-group", (room, name) => {
-    // if room not available, return to home
-    addUser({
+    // if room not available
+    let noRoom = addUser({
       room,
       id: socket.id,
       name,
     });
-    socket.join(room, () =>
-      socket
-        .to(room)
-        .broadcast.emit("notification", `${getUserRoom(socket.id).user} joined`)
-    );
+    if (!noRoom)
+      socket.join(room, () =>
+        socket
+          .to(room)
+          .broadcast.emit(
+            "notification",
+            `${getUserRoom(socket.id).user} joined`
+          )
+      );
   });
 
   //leave group
@@ -95,5 +99,7 @@ const getUserRoom = (id) => {
 };
 
 const addUser = ({ room, id, name }) => {
-  rooms.filter((r) => r.name === room)[0].users[id] = name;
+  let fRoom = rooms.filter((r) => r.name === room)[0];
+  if (fRoom) fRoom.users[id] = name;
+  else return true
 };
