@@ -2,7 +2,12 @@ let app = require("express")(),
   server = require("http").Server(app),
   io = require("socket.io")(server),
   port = process.env.PORT || 3000,
-  rooms = [],
+  rooms = [
+    {
+      name: "Dev Room",
+      users: {},
+    },
+  ],
   log = { users: [], rooms: [] };
 
 server.listen(port);
